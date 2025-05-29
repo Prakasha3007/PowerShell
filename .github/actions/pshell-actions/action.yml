@@ -1,0 +1,96 @@
+name: Template Run PowerShell Script
+description: PowerShell action testing
+inputs:
+  targetType:
+    required: true
+    type: string
+    description: "'inlineScript' or 'filePath'"
+  filePath:
+    required: false
+    type: string
+    description: "Path to the script file (required if targetType is 'filePath')"
+  arguments:
+    required: false
+    type: string
+    description: "Arguments to pass to the script"
+  script:
+    required: false
+    type: string
+    description: "Inline PowerShell script (required if targetType is 'inlineScript')"
+  workingFolder:
+    required: false
+    type: string
+    description: "Working folder"
+  errorPreference:
+    required: false
+    type: string
+    default: Stop
+    description: "Error preference (Stop or Continue)"
+  ignoreLASTEXITCODE:
+    required: false
+    type: boolean
+    default: false
+    description: "Ignore the last exit code"
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Run PowerShell Script
+      shell: pwsh
+      run: |
+        # Set error preference
+        $ErrorActionPreference = '${{ inputs.errorPreference }}'
+        $ignoreLASTEXITCODE = ${{ inputs.ignoreLASTEXITCODE }}
+
+        # Resolve working folder and verify its existence
+        $workingFolder = if ('${{ inputs.workingFolder }}' -ne '') { '${{ inputs.workingFolder }}' } else { '.' }
+        if (!(Test-Path -Path $workingFolder)) {
+          Write-Error "Working folder does not exist: $workingFolder"
+          exit 1
+        }
+        Set-Location -Path $workingFolder
+
+        # Execute the script based on targetType
+        if ('${{ inputs.targetType }}' -eq 'inlineScript') {
+          Write-Host "Running inline script..."
+          try {
+            Invoke-Expression "${{ inputs.script }}"
+          } catch {
+            if ($ErrorActionPreference -eq 'Stop') {
+              Write-Error "Inline script execution failed with error: $_"
+              exit 1
+            } else {
+              Write-Warning "Inline script execution encountered an error: $_"
+            }
+          }
+        } elseif ('${{ inputs.targetType }}' -eq 'filePath') {
+          Write-Host "Running script from file path..."
+          $scriptPath = "${{ inputs.filePath }}"
+          if (Test-Path $scriptPath) {
+            try {
+              & $scriptPath ${{ inputs.arguments }}
+              if (-not $ignoreLASTEXITCODE -and $LASTEXITCODE -ne 0) {
+                if ($ErrorActionPreference -eq 'Stop') {
+                  Write-Error "Script exited with a non-zero exit code: $LASTEXITCODE"
+                  exit $LASTEXITCODE
+                } else {
+                  Write-Warning "Script exited with a non-zero exit code: $LASTEXITCODE"
+                }
+              }
+            } catch {
+              if ($ErrorActionPreference -eq 'Stop') {
+                Write-Error "Script execution failed with error: $_"
+                exit 1
+              } else {
+                Write-Warning "Script execution encountered an error: $_"
+              }
+            }
+          } else {
+            Write-Error "Script file not found: $scriptPath"
+            exit 1
+          }
+        } else {
+          Write-Error "Invalid targetType provided: '${{ inputs.targetType }}'"
+          exit 1
+        }
