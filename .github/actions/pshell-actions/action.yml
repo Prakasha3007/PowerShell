@@ -41,7 +41,7 @@ runs:
       run: |
         # Set error preference
         $ErrorActionPreference = '${{ inputs.errorPreference }}'
-        $ignoreLASTEXITCODE = ${{ inputs.ignoreLASTEXITCODE }}
+        $ignoreLASTEXITCODE = [bool]::Parse("${{ inputs.ignoreLASTEXITCODE }}")
 
         # Resolve working folder and verify its existence
         $workingFolder = if ('${{ inputs.workingFolder }}' -ne '') { '${{ inputs.workingFolder }}' } else { '.' }
@@ -93,4 +93,4 @@ runs:
         } else {
           Write-Error "Invalid targetType provided: '${{ inputs.targetType }}'"
           exit 1
-          }
+        }
