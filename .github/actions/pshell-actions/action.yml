@@ -93,4 +93,3 @@ runs:
         } else {
           Write-Error "Invalid targetType provided: '${{ inputs.targetType }}'"
           exit 1
-        }
