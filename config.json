@@ -1,0 +1,12 @@
+{
+    "tfs_url": "http://<hostname>",
+    "azure_devops_organization": "<ORG_NAME>",
+    "azure_devops_project": "<PROJECT_NAME>",
+    "tfs_source_repo": "<REPO_NAME>",
+    "azure_devops_pat_token": "<PAT_TOKEN>",
+    "destination": "./cloned_repos",
+	"github_token":"GITHUB_TOKEN",
+    "github_organization": "<ORG_NAME>",
+    "github_target_repo": "<REPO_NAME>",
+	"specific_branches": "all"
+}
